@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mamformer
+    ports:
+      - "5432:5432"
+    networks:
+      - mamformer-network
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - mamformer-network
+
+  backend:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile
+    volumes:
+      - ./api:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mamformer
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your_secret_key_change_this_in_production
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - mamformer-network
+
+  worker:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile
+    command: celery -A app.worker.celery worker --loglevel=info
+    volumes:
+      - ./api:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mamformer
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your_secret_key_change_this_in_production
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+      - backend
+    networks:
+      - mamformer-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - mamformer-network
+
+volumes:
+  postgres_data:
+
+networks:
+  mamformer-network:
+    driver: bridge
