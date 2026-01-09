@@ -47,15 +47,26 @@ docker-compose up -d --build
 
 #### 1. 后端启动 (Backend)
 
-确保你已经配置好了 Python 环境（推荐使用 `DL` Conda 环境）：
+确保你已经配置好了 Python 环境（推荐使用 `DL` Conda 环境）。
+
+**方式 A：直接使用 Conda Python (Windows 推荐)**
+
+如果您已知 Conda 环境路径 (例如 `D:\ProgramFiles\Anaconda\envs\DL`)，可以直接运行：
+
+```powershell
+cd api
+D:\ProgramFiles\Anaconda\envs\DL\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**方式 B：常规通过激活环境启动**
 
 ```bash
 cd api
 
-# 激活你的 Conda 环境 (如果需要)
+# 激活你的 Conda 环境
 # conda activate DL
 
-# 安装依赖
+# 安装依赖 (如果尚未安装)
 pip install -r requirements.txt
 
 # 启动服务器
